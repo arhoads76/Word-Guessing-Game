@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Word Guessing Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="text-white bg-gradient-to-br from-blue-700 to-purple-800 w-full min-h-[100vh]">
+    <div class="flex justify-center p-24">
+
+        <div id="word_guessing_game">
+            <Heading title="-- new Guess the Word --"></Heading>
+            <Tiles-Display :word="word" :letters-guessed="lettersGuessed"></Tiles-Display>
+            <Keyboard :word="word" :letters-guessed="lettersGuessed"></Keyboard>
+            <Message-Display :message="message"></Message-Display>
+
+            <div id="actions^" class="flex justify-center">
+                <button class="text-2xl" v-if="isWinner()" @click="startGame()">Restart</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="gameWords.js"></script>
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        const app = createApp({
+            data() {
+                return {
+                    word: '',
+                    lettersGuessed: [],
+                    message: '',
+                };
+            },
+            mounted() {
+                this.startGame();
+                document.addEventListener('keypress', this.keyPressed);
+            },
+            methods: {
+                chooseRandomWord() {
+                    let randomWord = Math.floor(Math.random() * gameWords.length);
+                    this.word = gameWords[randomWord].toUpperCase();
+                },
+                keyPressed(e) {
+                    console.log(`Key Pressed: ${e.key}`, e);
+                    if (e.key == 'Escape') {
+                        this.startGame();
+                    } else {
+                        this.letterGuessed(e.key.toUpperCase());
+                    }
+                },
+                letterGuessed(letter) {
+                    this.lettersGuessed.push(letter);
+
+                    if (this.isWinner()) {
+                        this.message = 'Winner!';
+                    }
+                },
+                startGame() {
+                    this.lettersGuessed = [];
+                    this.message = '';
+
+                    this.chooseRandomWord();
+                },
+                isWinner() {
+                    for (let i = 0; i < this.word.length; i++) {
+                        const letter = this.word[i];
+                        if (!this.isGuessed(letter))
+                            return false;
+                    }
+                    return true;
+                },
+                isGuessed(letter) {
+                    return this.lettersGuessed.indexOf(letter) >= 0;
+                },
+            }
+        });
+
+        app.component('Heading', {
+            props: {
+                title: String,
+            },
+            template: `
+                <h1 id="title" class="text-4xl mb-8 text-center font-bold drop-shadow-xl/40">
+                    {{title}}
+                </h1>
+            `
+        });
+
+        app.component('TilesDisplay', {
+            props: {
+                word: String,
+                lettersGuessed: Array,
+            },
+            methods: {
+                isGuessed(letter) {
+                    return this.lettersGuessed && this.lettersGuessed.indexOf(letter) >= 0;
+                },
+            },
+            template: `
+                <div id="word" class="grid grid-cols-5 gap-2">
+                    <div v-for="letter in word" class="flex justify-center items-center w-16 h-16 text-black bg-slate-300 rounded shadow-xl/40 overflow-clip">
+                        <span v-if="isGuessed(letter)" class="font-bold text-3xl">{{ letter }}</span>
+                    </div>
+                </div>
+            `
+        });
+
+        app.component('Keyboard', {
+            props: {
+                word: String,
+                lettersGuessed: Array,
+            },
+            data() {
+                return {
+                    keyboardKeys: [
+                        ['Q','W','E','R','T','Y','U','I','O','P'],
+                        ['A','S','D','F','G','H','J','K','L'],
+                        ['Z','X','C','V','B','N','M'],
+                    ]
+                };
+            },
+            methods: {
+                isGuessed(letter) {
+                    return this.lettersGuessed && this.lettersGuessed.indexOf(letter) >= 0;
+                },
+            },
+            template: `
+                <div id="keyboard" class="text-lg mt-8 text-center font-bold">
+                    <div v-for="row in keyboardKeys" class="flex flex-row justify-center">
+                        <div v-for="letter in row" class="cursor-pointer w-8 h-8 mr-1 mb-1 bg-slate-600 rounded shadow-xl/40 overflow-clip" :class="{ 'text-white': !isGuessed(letter), 'text-gray-700': isGuessed(letter) }">
+                            {{letter}}
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+
+        app.component('MessageDisplay', {
+            props: {
+                message: String,
+            },
+            template: `
+                <h2 id="message" class="text-2xl mt-8 text-center font-bold drop-shadow-xl/40">
+                    {{ message }}
+                </h2>
+            `
+        })
+
+        app.mount('#word_guessing_game');
+    </script>
+</body>
+</html>
